@@ -1,0 +1,10 @@
+{
+    "name": "wallet-gen",
+    "version-string": "1.0.0",
+    "description": "Multi-chain bulk wallet generator and vanity address finder",
+    "dependencies": [
+        "libsecp256k1",
+        "libsodium",
+        "openssl"
+    ]
+}
