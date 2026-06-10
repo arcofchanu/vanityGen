@@ -7,16 +7,16 @@
 #include <thread>
 #include <algorithm>
 
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 // CLI Argument Parser
 //
 // Parses command-line arguments into a Config struct.
-// No external library — manual parsing for zero dependencies.
-// ─────────────────────────────────────────────────────────────────────────────
+// No external library - manual parsing for zero dependencies.
+// -----------------------------------------------------------------------------
 
 enum class Chain { ETH, BSC, BTC, SOL };
 enum class VanityMode { PREFIX, SUFFIX, BOTH };
-enum class OutputMode { CSV, JSON, BOTH, TRACE };
+enum class OutputMode { CSV, JSON, BOTH, TRACE, ADDRESSES_ONLY };
 enum class RunMode { BULK, VANITY };
 
 struct Config {
@@ -62,13 +62,14 @@ inline const char* output_mode_to_string(OutputMode m) {
         case OutputMode::JSON:  return "JSON";
         case OutputMode::BOTH:  return "CSV+JSON";
         case OutputMode::TRACE: return "TRACE";
+        case OutputMode::ADDRESSES_ONLY: return "ADDRESSES_ONLY";
     }
     return "UNKNOWN";
 }
 
 inline void print_help() {
     std::cout << R"(
-wallet-gen — Multi-chain bulk wallet generator & vanity address finder
+wallet-gen - Multi-chain bulk wallet generator & vanity address finder
 
 USAGE:
   wallet-gen [OPTIONS]
@@ -83,7 +84,7 @@ OPTIONS:
   --vcount    <N>                    Number of vanity matches to find (default: 1)
   --threads   <N>                    Thread count (default: auto-detect)
   --output    <filename>             Output file base name (default: wallets)
-  --format    <csv|json|both|trace>  Output format (default: csv)
+  --format    <csv|json|both|trace|x>  Output format (default: csv, x=addresses only)
   --case                             Enable case-sensitive pattern matching
   --help                             Show this help
 
@@ -205,6 +206,7 @@ inline Config parse_args(int argc, char** argv) {
             else if (val == "json")  cfg.output_mode = OutputMode::JSON;
             else if (val == "both")  cfg.output_mode = OutputMode::BOTH;
             else if (val == "trace") cfg.output_mode = OutputMode::TRACE;
+            else if (val == "x")     cfg.output_mode = OutputMode::ADDRESSES_ONLY;
             else {
                 std::cerr << "[!] Unknown format: " << val << "\n";
                 std::exit(1);
@@ -247,7 +249,7 @@ inline Config parse_args(int argc, char** argv) {
             // OK: suffix-only
         } else if (cfg.vanity_mode == VanityMode::BOTH && !cfg.suffix_pattern.empty()) {
             // Need at least one pattern for BOTH mode
-            // OK if suffix is provided but prefix is empty — treat as suffix-only
+            // OK if suffix is provided but prefix is empty - treat as suffix-only
         } else {
             std::cerr << "[!] Error: --pattern is required in vanity mode\n";
             std::exit(1);
@@ -270,38 +272,38 @@ inline Config parse_args(int argc, char** argv) {
 
 inline void print_config(const Config& cfg) {
     std::cout << "\n";
-    std::cout << "╔══════════════════════════════════════════╗\n";
-    std::cout << "║         wallet-gen v1.0                  ║\n";
-    std::cout << "╠══════════════════════════════════════════╣\n";
-    std::cout << "║  Chain:      " << chain_to_string(cfg.chain) << std::string(29 - std::strlen(chain_to_string(cfg.chain)), ' ') << "║\n";
-    std::cout << "║  Mode:       " << run_mode_to_string(cfg.run_mode) << std::string(29 - std::strlen(run_mode_to_string(cfg.run_mode)), ' ') << "║\n";
+    std::cout << "+------------------------------------------+\n";
+    std::cout << "|         wallet-gen v1.0                  |\n";
+    std::cout << "+------------------------------------------+\n";
+    std::cout << "|  Chain:      " << chain_to_string(cfg.chain) << std::string(29 - std::strlen(chain_to_string(cfg.chain)), ' ') << "|\n";
+    std::cout << "|  Mode:       " << run_mode_to_string(cfg.run_mode) << std::string(29 - std::strlen(run_mode_to_string(cfg.run_mode)), ' ') << "|\n";
 
     if (cfg.run_mode == RunMode::BULK) {
         std::string count_str = std::to_string(cfg.bulk_count);
-        std::cout << "║  Count:      " << count_str << std::string(29 - count_str.size(), ' ') << "║\n";
+        std::cout << "|  Count:      " << count_str << std::string(29 - count_str.size(), ' ') << "|\n";
     } else {
         std::string pat_str = cfg.pattern;
         if (pat_str.size() > 20) pat_str = pat_str.substr(0, 20) + "...";
-        std::cout << "║  Pattern:    " << pat_str << std::string(29 - pat_str.size(), ' ') << "║\n";
+        std::cout << "|  Pattern:    " << pat_str << std::string(29 - pat_str.size(), ' ') << "|\n";
         if (cfg.vanity_mode == VanityMode::BOTH || cfg.vanity_mode == VanityMode::SUFFIX) {
             std::string suf_str = cfg.suffix_pattern;
             if (suf_str.size() > 20) suf_str = suf_str.substr(0, 20) + "...";
-            std::cout << "║  Suffix:     " << suf_str << std::string(29 - suf_str.size(), ' ') << "║\n";
+            std::cout << "|  Suffix:     " << suf_str << std::string(29 - suf_str.size(), ' ') << "|\n";
         }
-        std::cout << "║  Match:      " << vanity_mode_to_string(cfg.vanity_mode) << std::string(29 - std::strlen(vanity_mode_to_string(cfg.vanity_mode)), ' ') << "║\n";
+        std::cout << "|  Match:      " << vanity_mode_to_string(cfg.vanity_mode) << std::string(29 - std::strlen(vanity_mode_to_string(cfg.vanity_mode)), ' ') << "|\n";
         std::string vc_str = std::to_string(cfg.vanity_count);
-        std::cout << "║  Find:       " << vc_str << " match" << (cfg.vanity_count > 1 ? "es" : "") << std::string(29 - vc_str.size() - (cfg.vanity_count > 1 ? 8 : 6), ' ') << "║\n";
-        std::cout << "║  Case-sens:  " << (cfg.case_sensitive ? "YES" : "NO") << std::string(29 - (cfg.case_sensitive ? 3 : 2), ' ') << "║\n";
+        std::cout << "|  Find:       " << vc_str << " match" << (cfg.vanity_count > 1 ? "es" : "") << std::string(29 - vc_str.size() - (cfg.vanity_count > 1 ? 8 : 6), ' ') << "|\n";
+        std::cout << "|  Case-sens:  " << (cfg.case_sensitive ? "YES" : "NO") << std::string(29 - (cfg.case_sensitive ? 3 : 2), ' ') << "|\n";
     }
 
     std::string threads_str = std::to_string(cfg.thread_count);
-    std::cout << "║  Threads:    " << threads_str << std::string(29 - threads_str.size(), ' ') << "║\n";
-    std::cout << "║  Output:     " << output_mode_to_string(cfg.output_mode) << std::string(29 - std::strlen(output_mode_to_string(cfg.output_mode)), ' ') << "║\n";
+    std::cout << "|  Threads:    " << threads_str << std::string(29 - threads_str.size(), ' ') << "|\n";
+    std::cout << "|  Output:     " << output_mode_to_string(cfg.output_mode) << std::string(29 - std::strlen(output_mode_to_string(cfg.output_mode)), ' ') << "|\n";
 
     std::string file_str = cfg.output_file;
     if (file_str.size() > 20) file_str = file_str.substr(0, 20) + "...";
-    std::cout << "║  File:       " << file_str << std::string(29 - file_str.size(), ' ') << "║\n";
+    std::cout << "|  File:       " << file_str << std::string(29 - file_str.size(), ' ') << "|\n";
 
-    std::cout << "╚══════════════════════════════════════════╝\n";
+    std::cout << "+------------------------------------------+\n";
     std::cout << "\n";
 }

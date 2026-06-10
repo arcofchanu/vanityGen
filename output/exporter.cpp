@@ -110,6 +110,21 @@ void write_trace(const std::string& filename, const std::vector<Wallet>& wallets
     std::cout << "[+] Written " << wallets.size() << " addresses to " << filename << ".addresses.json\n";
 }
 
+void write_addresses_only(const std::string& filename, const std::vector<Wallet>& wallets) {
+    // Write only addresses file
+    std::ostringstream ss;
+    ss << "[\n";
+    for (size_t i = 0; i < wallets.size(); ++i) {
+        ss << "    \"" << json_escape(wallets[i].address) << "\"";
+        if (i + 1 < wallets.size()) ss << ",";
+        ss << "\n";
+    }
+    ss << "]\n";
+
+    atomic_write(filename + ".addresses.json", ss.str());
+    std::cout << "[+] Written " << wallets.size() << " addresses to " << filename << ".addresses.json\n";
+}
+
 void export_wallets(const Config& cfg, const std::vector<Wallet>& wallets) {
     if (wallets.empty()) {
         std::cout << "[!] No wallets to export\n";
@@ -129,6 +144,9 @@ void export_wallets(const Config& cfg, const std::vector<Wallet>& wallets) {
             break;
         case OutputMode::TRACE:
             write_trace(cfg.output_file, wallets);
+            break;
+        case OutputMode::ADDRESSES_ONLY:
+            write_addresses_only(cfg.output_file, wallets);
             break;
     }
 }

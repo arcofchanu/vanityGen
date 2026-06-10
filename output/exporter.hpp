@@ -26,6 +26,10 @@ void write_json(const std::string& filename, const std::vector<Wallet>& wallets)
 /// Creates: filename.json (same as normal JSON) and filename.addresses.json (addresses array)
 void write_trace(const std::string& filename, const std::vector<Wallet>& wallets);
 
+/// Write only addresses to a JSON file.
+/// Creates: filename.addresses.json (addresses array only)
+void write_addresses_only(const std::string& filename, const std::vector<Wallet>& wallets);
+
 /// Write wallets to the configured output format(s).
 void export_wallets(const Config& cfg, const std::vector<Wallet>& wallets);
 
